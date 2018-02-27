@@ -17,21 +17,24 @@ global  D1_trn D1_dev D1_tst D2_trn D2_dev D2_tst %#ok<NUSED>
 
 %% S1: Train: D1-Train, Test: D1-Test
 disp('>>> running S1: Train: D1-Train, Test: D1-Test');
-setting_s1
+setting_s1;
 %% S2: Train: D2-Train, Test: D2-Test
 disp('>>> running S2: Train: D2-Train, Test: D2-Test');
-setting_s2
+str = setting_s2;
 %% S3: Train: D1-Train + D2-Train, Test: D1-Test
 disp('>>> running S3: Train: D1-Train + D2-Train, Test: D1-Test');
-setting_s3
+setting_s3;
 %% S4: Train: D1-Train + D2-Train, Test: D2-Test
 disp('>>> running S4: Train: D1-Train + D2-Train, Test: D2-Test');
-setting_s4
+setting_s4;
+
+% Generate sentence
+disp(['Sentence generated from S2 Setting - "' str ' "']);
 
 end
 
 %% S1: Train: D1-Train, Test: D1-Test
-function setting_s1
+function str = setting_s1
 global D1_trn_ix_b D1_dev_ix_b D1_tst_ix_b D1_trn_u D1_trn_b D1_dev_b D1_tst_b D1_pu D1_pb D1_trn_loc D1_dev_loc D1_tst_loc D1_vocab Num_D1_vocab
 global  D1_trn D1_dev D1_tst
 
@@ -211,20 +214,25 @@ toc
 % optimization for d in unigram using held out set
 Num_D1_vocab = length(D1_vocab);
 % d=.1:.1:.9;
+% D1_dev_ppl_u = zeros(length(d),1);
 % for i=1:length(d)
 % d1(1) = d(i);
 % d1(2) = d(i);
 % d1(3) = d(i);
-%
+% 
 % D1_pu = max(D1_trn_u - (D1_trn_u==1)*d1(1)- (D1_trn_u==2)*d1(2)- (D1_trn_u>=3)*d1(3),0)/sum(D1_trn_u);
 % % D1_pu = D1_pu+(abs(1-sum(D1_pu))/Num_D1_vocab);
 % D1_pu(end) = 1-sum(D1_pu);% <unk> prob
-%
+% 
 % % find dev perplexity
-% D1_dev_ppl_u = exp(-1/length(D1_dev_loc)*sum(log(D1_pu(D1_dev_loc))));
-% disp(['optim : S1 Dev Data Unigram Perplexity is ' num2str(D1_dev_ppl_u) ' for d = ' num2str(d(i))]);
-%
+% D1_dev_ppl_u(i) = exp(-1/length(D1_dev_loc)*sum(log(D1_pu(D1_dev_loc))));
+% disp(['optim : S1 Dev Data Unigram Perplexity is ' num2str(D1_dev_ppl_u(i)) ' for d = ' num2str(d(i))]);
+% 
 % end
+% plot(d,D1_dev_ppl_u);
+% xlabel('Absolute discount value');
+% ylabel('Unigram Perplexity');
+% legend('preplexity');
 
 %% Post optimization unigram model
 d=.5;
@@ -281,7 +289,8 @@ D1_pu = max(D1_trn_u_mod - (D1_trn_u_mod==1)*d1(1)- (D1_trn_u_mod==2)*d1(2)- (D1
 D1_pu(end) = 1-sum(D1_pu);% <unk> prob
 
 %% Post Optimization Bigram model
-% d=.9:.01:.99;
+% d=.8:.01:.99;
+% D1_dev_ppl_b = zeros(length(d),1);
 % for i=1:length(d)
 % d2(1) = d(i);
 % d2(2) = d(i);
@@ -290,21 +299,25 @@ D1_pu(end) = 1-sum(D1_pu);% <unk> prob
 % % d2(1) = d;
 % % d2(2) = d;
 % % d2(3) = d;
-%
+% 
 % D1_pb = max(D1_trn_b - (D1_trn_b==1)*d2(1)- (D1_trn_b==2)*d2(2)- (D1_trn_b>=3)*d2(3),0)./D1_trn_u(D1_trn_ix_b(:,1));
 % a_w1x = sparse(D1_trn_ix_b(:,1),D1_trn_ix_b(:,2),D1_trn_b,Num_D1_vocab,Num_D1_vocab);
 % b_w1 = full(sum(a_w1x==1,2)*d2(1)+ sum(a_w1x==2,2)*d2(2)+ sum(a_w1x==3,2)*d2(3));%./D1_trn_u(D1_trn_ix_b(:,2))
 % D1_pb = D1_pb + b_w1(D1_trn_ix_b(:,1)).*D1_pu(D1_trn_ix_b(:,2))./D1_trn_u(D1_trn_ix_b(:,1));
 % D1_pb_mat = sparse(D1_trn_ix_b(:,1),D1_trn_ix_b(:,2),D1_pb,Num_D1_vocab,Num_D1_vocab);
 % D1_pb_norm = (1-sum(D1_pb_mat,2));
-%
+% 
 % [D1_pb_exists,D1_pb_exists_ix] = ismember(D1_dev_ix_b,D1_trn_ix_b,'rows');
 % D1_pb_dev_ix = D1_pb_exists_ix(D1_pb_exists);
 % sum_log_p = sum(log(D1_pb(D1_pb_dev_ix)))+sum(log(D1_pb_norm(D1_dev_ix_b(~D1_pb_exists,1)).*D1_pu(D1_dev_ix_b(~D1_pb_exists,2))));
-% D1_dev_ppl_b = exp(-sum_log_p/length(D1_dev_ix_b));
-% disp(['optim : S1 Dev Data Bigram Perplexity is ' num2str(D1_dev_ppl_b) ' for d = ' num2str(d(i))]);
-%
+% D1_dev_ppl_b(i) = exp(-sum_log_p/length(D1_dev_ix_b));
+% disp(['optim : S1 Dev Data Bigram Perplexity is ' num2str(D1_dev_ppl_b(i)) ' for d = ' num2str(d(i))]);
+% 
 % end
+% plot(d,D1_dev_ppl_b);
+% xlabel('Absolute discount value');
+% ylabel('Bigram Perplexity');
+% legend('preplexity');
 
 d=.9;
 d2(1) = d;
@@ -313,8 +326,8 @@ d2(3) = d;
 
 D1_pb = max(D1_trn_b - (D1_trn_b==1)*d2(1)- (D1_trn_b==2)*d2(2)- (D1_trn_b>=3)*d2(3),0)./D1_trn_u(D1_trn_ix_b(:,1));
 a_w1x = sparse(D1_trn_ix_b(:,1),D1_trn_ix_b(:,2),D1_trn_b,Num_D1_vocab,Num_D1_vocab);
-b_w1 = full(sum(a_w1x==1,2)*d2(1)+ sum(a_w1x==2,2)*d2(2)+ sum(a_w1x==3,2)*d2(3));%./D1_trn_u(D1_trn_ix_b(:,2))
-D1_pb = D1_pb + b_w1(D1_trn_ix_b(:,1)).*D1_pu(D1_trn_ix_b(:,2))./D1_trn_u(D1_trn_ix_b(:,1));
+b_w1 = full(sum(a_w1x==1,2)*d2(1)+ sum(a_w1x==2,2)*d2(2)+ sum(a_w1x==3,2)*d2(3))./D1_trn_u;%./D1_trn_u(D1_trn_ix_b(:,2))
+D1_pb = D1_pb + b_w1(D1_trn_ix_b(:,1)).*D1_pu(D1_trn_ix_b(:,2));
 D1_pb_mat = sparse(D1_trn_ix_b(:,1),D1_trn_ix_b(:,2),D1_pb,Num_D1_vocab,Num_D1_vocab);
 D1_pb_norm = (1-sum(D1_pb_mat,2));
 
@@ -335,7 +348,7 @@ disp(newline);
 w1=[];
 str ='';%<\s\>
 for i=1:9
-    num_toD1_pwords = randi(10);
+    num_topwords = randi(10);
     if isempty(w1)
         % [~,w1_ix] = mink(D1_pu(1:end-1),10000);
         % w1 = w1_ix(randi(length(w1_ix)));
@@ -343,27 +356,27 @@ for i=1:9
         % w1 = w1_ix(end);
         str = D1_vocab{w1};
     end
+    
     w1_ix = find(D1_trn_ix_b(:,1)==w1);
-    [max_D1_pb,w2_ix] = maxk(D1_pb(w1_ix),num_toD1_pwords);% D1_trn_ix_b(w1_ix,2)
-    rand_toD1_pk = randi(length(w2_ix));
-    max_D1_pb = max_D1_pb(rand_toD1_pk);
-    [max_D1_pb_n,norm_ix] = maxk(D1_pb_norm(w1)*D1_pu(1:end-1),num_toD1_pwords);% D1_trn_ix_b(w1_ix,2)
-    max_D1_pb_n = max_D1_pb_n(randi(length(norm_ix)));
-    if max_D1_pb > max_D1_pb_n
-        w2 = D1_trn_ix_b(w1_ix(w2_ix(rand_toD1_pk)),2);
-    else
-        w2 = norm_ix(randi(length(norm_ix)));
-    end
+    total_p = zeros(Num_D1_vocab,1);
+    known_p_b = D1_pb(w1_ix);
+    known_p_b_ix = D1_trn_ix_b(w1_ix,2);
+    unknown_p_b_ix = ~ismember([1:Num_D1_vocab]',known_p_b_ix);
+    total_p(unknown_p_b_ix) = b_w1(w1)*D1_pu(unknown_p_b_ix);
+    total_p(known_p_b_ix) = known_p_b;
+
+    [~,w2_ix] = maxk(total_p(1:end-1),num_topwords);% D1_trn_ix_b(w1_ix,2)
+    w2 = w2_ix(length(w2_ix));
     str = [str ' ' D1_vocab{w2}];
     w1 = w2;
 end
-disp(['Sentence generated from S1 Setting - "' str ' "'])
-disp(newline);
+% disp(['Sentence generated from S1 Setting - "' str ' "'])
+% disp(newline);
 
 end
 
 %% S2: Train: D2-Train, Test: D2-Test
-function setting_s2
+function str = setting_s2
 %%  NLU Assignment 1
 %   Assignment 1  - Natural Language model
 %
@@ -636,7 +649,7 @@ disp(newline);
 w1=[];
 str ='';%<\s\>
 for i=1:9
-    num_toD2_pwords = randi(10);
+    num_topwords = randi(10);
     if isempty(w1)
         % [~,w1_ix] = mink(D2_pu(1:end-1),10000);
         % w1 = w1_ix(randi(length(w1_ix)));
@@ -644,27 +657,27 @@ for i=1:9
         % w1 = w1_ix(end);
         str = D2_vocab{w1};
     end
+    
     w1_ix = find(D2_trn_ix_b(:,1)==w1);
-    [max_D2_pb,w2_ix] = maxk(D2_pb(w1_ix),num_toD2_pwords);% D2_trn_ix_b(w1_ix,2)
-    rand_toD2_pk = randi(length(w2_ix));
-    max_D2_pb = max_D2_pb(rand_toD2_pk);
-    [max_D2_pb_n,norm_ix] = maxk(D2_pb_norm(w1)*D2_pu(1:end-1),num_toD2_pwords);% D2_trn_ix_b(w1_ix,2)
-    max_D2_pb_n = max_D2_pb_n(randi(length(norm_ix)));
-    if max_D2_pb > max_D2_pb_n
-        w2 = D2_trn_ix_b(w1_ix(w2_ix(rand_toD2_pk)),2);
-    else
-        w2 = norm_ix(randi(length(norm_ix)));
-    end
+    total_p = zeros(Num_D2_vocab,1);
+    known_p_b = D2_pb(w1_ix);
+    known_p_b_ix = D2_trn_ix_b(w1_ix,2);
+    unknown_p_b_ix = ~ismember([1:Num_D2_vocab]',known_p_b_ix);
+    total_p(unknown_p_b_ix) = b_w1(w1)*D2_pu(unknown_p_b_ix);
+    total_p(known_p_b_ix) = known_p_b;
+
+    [~,w2_ix] = maxk(total_p(1:end-1),num_topwords);% D1_trn_ix_b(w1_ix,2)
+    w2 = w2_ix(length(w2_ix));
     str = [str ' ' D2_vocab{w2}];
     w1 = w2;
 end
-disp(['Sentence generated from S2 Setting - "' str ' "'])
-disp(newline);
+% disp(['Sentence generated from S2 Setting - "' str ' "'])
+% disp(newline);
 
 end
 
 %% S3: Train: D1-Train + D2-Train, Test: D1-Test
-function setting_s3
+function str = setting_s3
 global S3_trn_ix_b S3_dev_ix_b S3_tst_ix_b S3_trn_u S3_trn_b S3_dev_b S3_tst_b S3_pu S3_pb S3_trn_loc S3_dev_loc S3_tst_loc S3_vocab Num_S3_vocab
 global  D1_trn D1_dev D1_tst D2_trn D2_dev
 
@@ -904,7 +917,7 @@ disp(newline);
 w1=[];
 str ='';%<\s\>
 for i=1:9
-    num_toS3_pwords = randi(10);
+    num_topwords = randi(10);
     if isempty(w1)
         % [~,w1_ix] = mink(S3_pu(1:end-1),10000);
         % w1 = w1_ix(randi(length(w1_ix)));
@@ -912,27 +925,27 @@ for i=1:9
         % w1 = w1_ix(end);
         str = S3_vocab{w1};
     end
+    
     w1_ix = find(S3_trn_ix_b(:,1)==w1);
-    [max_S3_pb,w2_ix] = maxk(S3_pb(w1_ix),num_toS3_pwords);% S3_trn_ix_b(w1_ix,2)
-    rand_toS3_pk = randi(length(w2_ix));
-    max_S3_pb = max_S3_pb(rand_toS3_pk);
-    [max_S3_pb_n,norm_ix] = maxk(S3_pb_norm(w1)*S3_pu(1:end-1),num_toS3_pwords);% S3_trn_ix_b(w1_ix,2)
-    max_S3_pb_n = max_S3_pb_n(randi(length(norm_ix)));
-    if max_S3_pb > max_S3_pb_n
-        w2 = S3_trn_ix_b(w1_ix(w2_ix(rand_toS3_pk)),2);
-    else
-        w2 = norm_ix(randi(length(norm_ix)));
-    end
+    total_p = zeros(Num_S3_vocab,1);
+    known_p_b = S3_pb(w1_ix);
+    known_p_b_ix = S3_trn_ix_b(w1_ix,2);
+    unknown_p_b_ix = ~ismember([1:Num_S3_vocab]',known_p_b_ix);
+    total_p(unknown_p_b_ix) = b_w1(w1)*S3_pu(unknown_p_b_ix);
+    total_p(known_p_b_ix) = known_p_b;
+    [~,w2_ix] = maxk(total_p(1:end-1),num_topwords);% D1_trn_ix_b(w1_ix,2)
+    w2 = w2_ix(length(w2_ix));
+
     str = [str ' ' S3_vocab{w2}];
     w1 = w2;
 end
-disp(['Sentence generated from S3 Setting - "' str ' "'])
-disp(newline);
+% disp(['Sentence generated from S3 Setting - "' str ' "'])
+% disp(newline);
 
 end
 
 %% S4: Train: D1-Train + D2-Train, Test: D2-Test
-function setting_s4
+function str = setting_s4
 global S4_trn_ix_b S4_dev_ix_b S4_tst_ix_b S4_trn_u S4_trn_b S4_dev_b S4_tst_b S4_pu S4_pb S4_trn_loc S4_dev_loc S4_tst_loc S4_vocab Num_S4_vocab
 global  D1_trn D1_dev D2_trn D2_dev D2_tst
 
@@ -1174,7 +1187,7 @@ disp(newline);
 w1=[];
 str ='';%<\s\>
 for i=1:9
-    num_toS4_pwords = randi(10);
+    num_topwords = randi(10);
     if isempty(w1)
         % [~,w1_ix] = mink(S4_pu(1:end-1),10000);
         % w1 = w1_ix(randi(length(w1_ix)));
@@ -1182,21 +1195,21 @@ for i=1:9
         % w1 = w1_ix(end);
         str = S4_vocab{w1};
     end
+    
     w1_ix = find(S4_trn_ix_b(:,1)==w1);
-    [max_S4_pb,w2_ix] = maxk(S4_pb(w1_ix),num_toS4_pwords);% S4_trn_ix_b(w1_ix,2)
-    rand_toS4_pk = randi(length(w2_ix));
-    max_S4_pb = max_S4_pb(rand_toS4_pk);
-    [max_S4_pb_n,norm_ix] = maxk(S4_pb_norm(w1)*S4_pu(1:end-1),num_toS4_pwords);% S4_trn_ix_b(w1_ix,2)
-    max_S4_pb_n = max_S4_pb_n(randi(length(norm_ix)));
-    if max_S4_pb > max_S4_pb_n
-        w2 = S4_trn_ix_b(w1_ix(w2_ix(rand_toS4_pk)),2);
-    else
-        w2 = norm_ix(randi(length(norm_ix)));
-    end
+    total_p = zeros(Num_S4_vocab,1);
+    known_p_b = S4_pb(w1_ix);
+    known_p_b_ix = S4_trn_ix_b(w1_ix,2);
+    unknown_p_b_ix = ~ismember([1:Num_S4_vocab]',known_p_b_ix);
+    total_p(unknown_p_b_ix) = b_w1(w1)*S4_pu(unknown_p_b_ix);
+    total_p(known_p_b_ix) = known_p_b;
+    [~,w2_ix] = maxk(total_p(1:end-1),num_topwords);% D1_trn_ix_b(w1_ix,2)
+    w2 = w2_ix(length(w2_ix));
+
     str = [str ' ' S4_vocab{w2}];
     w1 = w2;
 end
-disp(['Sentence generated from S4 Setting - "' str ' "'])
-disp(newline);
+% disp(['Sentence generated from S4 Setting - "' str ' "'])
+% disp(newline);
 
 end
